@@ -112,8 +112,10 @@ if os.path.isfile(outfile):
 f = open(outfile, "x")
 f.close()
 
-f = open(outfile, "a")
+# f = open(outfile, "a")
 
+
+base_url = '{host}:{port}'.format(host=host, port=port)
 
 
 #track the depth of the search
@@ -132,6 +134,8 @@ import time
 
 def search(current_node):
     global all_nodes
+    global base_url
+    global outfile
 
     time.sleep(1)
 
@@ -179,6 +183,16 @@ def search(current_node):
     
     if len(current_node.children_dirs) == 0 and len(current_node.results) == 0:
         return
+    
+    f = open(outfile, "a")
+
+
+    f.write("\t"*current_node.depth + base_url + current_node.base_path + "\n")
+
+    for result in current_node.results:
+        f.write("\t"*(current_node.depth + 1) + result + "\n")
+
+    f.close()
 
     #only append nodes that have some form of result
     all_nodes.append(current_node)
@@ -197,31 +211,29 @@ def search(current_node):
 search(current_node)
 
 
-for node in all_nodes:
-    node.print_me()
 
 
 
-base_url = '{host}:{port}'.format(host=host, port=port)
 
 
-def write_to_file(file_to_write_to, current_node):
-
-    global base_url
-
-    file_to_write_to.write("\t"*current_node.depth + base_url + current_node.base_path + "\n")
-
-    for result in current_node.results:
-        file_to_write_to.write("\t"*(current_node.depth + 1) + result + "\n")
-
-    for node in current_node.children_nodes:
-        write_to_file(file_to_write_to, node)
 
 
-write_to_file(f, root_node)
+# def write_to_file(file_to_write_to, current_node):
+
+#     global base_url
+
+#     file_to_write_to.write("\t"*current_node.depth + base_url + current_node.base_path + "\n")
+
+#     for result in current_node.results:
+#         file_to_write_to.write("\t"*(current_node.depth + 1) + result + "\n")
+
+#     for node in current_node.children_nodes:
+#         write_to_file(file_to_write_to, node)
+
+
+# write_to_file(f, root_node)
     
 
-f.close()
     
 
 
