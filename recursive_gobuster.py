@@ -45,6 +45,7 @@ class Node:
     def __str__(self):
         return f"Depth = {self.depth} Base Path = {self.base_path} Results = {self.results} Children Dirs = {self.children_dirs}"
     def print_me(self):
+        print("Base path = " + self.base_path)
         print("Printing Children Dirs")
         for child in self.children_dirs:
             print(child)
@@ -104,6 +105,14 @@ options = sys.argv[5]
 outfile = sys.argv[6]
 
 
+if os.path.isfile(outfile):
+    print("ERROR OUTPUT FILE " + outfile + " ALREADY EXISTS")
+
+
+f = open(outfile, "x")
+f.close()
+
+f = open(outfile, "a")
 
 
 
@@ -116,18 +125,19 @@ all_nodes = []
 
 root_node = Node(depth, base_path, None)
 
-all_nodes.append(root_node)
-
 current_node = root_node
 
 
+import time
 
 def search(current_node):
     global all_nodes
 
+    time.sleep(1)
 
     #note that the base_path is based on the current node since this will change as the while loop 
     gobuster_full_url = '{host}:{port}/{base_path}'.format(host=host, port=port, base_path=current_node.base_path)
+    gobuster_full_url = gobuster_full_url.replace("//", "/")
 
     #temp file to track results from each run of gobuster and make sure names are 
     # unique for each call to avoid overwrite
@@ -160,24 +170,26 @@ def search(current_node):
             if len(line.strip()) == 0 :
                 continue
             elif "Status: 301" in line:
-                print("Status 301")
-                print(line.split(' ', 1)[0])
                 current_node.append_child_dir(line.split(' ', 1)[0])
             else:
-                print("Not Status 301")
-                print(line.replace("\n", ""))
                 current_node.append_result(line.replace("\n", ""))
 
-    print("PRINTING CURRENT NODE")
-    current_node.print_me()
+    
+
+    
+    if len(current_node.children_dirs) == 0 and len(current_node.results) == 0:
+        return
+
+    #only append nodes that have some form of result
+    all_nodes.append(current_node)
 
     if len(current_node.children_dirs) == 0:
         return
-
+    
+    #only search deeper if there are actually nested directories to search
     for dir in current_node.children_dirs:
-        new_node = Node(current_node.depth, current_node.base_path + dir, current_node)
+        new_node = Node(current_node.depth + 1, current_node.base_path + dir, current_node)
         current_node.append_child_node(new_node)
-        all_nodes.append(new_node)
         search(new_node)
 
 
@@ -188,7 +200,28 @@ search(current_node)
 for node in all_nodes:
     node.print_me()
 
+
+
+base_url = '{host}:{port}'.format(host=host, port=port)
+
+
+def write_to_file(file_to_write_to, current_node):
+
+    global base_url
+
+    file_to_write_to.write("\t"*current_node.depth + base_url + current_node.base_path + "\n")
+
+    for result in current_node.results:
+        file_to_write_to.write("\t"*(current_node.depth + 1) + result + "\n")
+
+    for node in current_node.children_nodes:
+        write_to_file(file_to_write_to, node)
+
+
+write_to_file(f, root_node)
     
+
+f.close()
     
 
 
