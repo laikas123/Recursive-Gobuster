@@ -35,19 +35,20 @@ class Node:
         self.parent_node = parent_node
         self.results = []
         self.children_dirs = []
+        self.children_nodes = []
     def append_child_dir(self, child_dir):
         self.children_dirs.append(child_dir)
+    def append_child_node(self, child_node):
+        self.children_nodes.append(child_node)
     def append_result(self, result):
         self.results.append(result)
     def __str__(self):
         return f"Depth = {self.depth} Base Path = {self.base_path} Results = {self.results} Children Dirs = {self.children_dirs}"
     def print_me(self):
         print("Printing Children Dirs")
-        print(self.children_dirs)
         for child in self.children_dirs:
             print(child)
         print("Printing Results")
-        print(self.results)
         for result in self.results:
             print(result)
 
@@ -106,7 +107,6 @@ outfile = sys.argv[6]
 
 
 
-
 #track the depth of the search
 depth = 0
 
@@ -120,10 +120,11 @@ all_nodes.append(root_node)
 
 current_node = root_node
 
-#for the while loop, whether we still have nodes to search
-searching = True 
 
-while(searching):
+
+def search(current_node):
+    global all_nodes
+
 
     #note that the base_path is based on the current node since this will change as the while loop 
     gobuster_full_url = '{host}:{port}/{base_path}'.format(host=host, port=port, base_path=current_node.base_path)
@@ -147,8 +148,6 @@ while(searching):
     full_command = 'gobuster dir -u {gobuster_full_url} -w {wordlist} {options} -o {tempfile}'.format(gobuster_full_url=gobuster_full_url,
                                                                                                     wordlist=wordlist, options=options, 
                                                                                                     tempfile=temp_file_name)
-    
-    new_paths = []
 
     print(full_command)
 
@@ -171,17 +170,27 @@ while(searching):
 
     print("PRINTING CURRENT NODE")
     current_node.print_me()
+
+    if len(current_node.children_dirs) == 0:
+        return
+
+    for dir in current_node.children_dirs:
+        new_node = Node(current_node.depth, current_node.base_path + dir, current_node)
+        current_node.append_child_node(new_node)
+        all_nodes.append(new_node)
+        search(new_node)
+
+
+
+search(current_node)
+
+
+for node in all_nodes:
+    node.print_me()
+
     
-    searching = False
-
-
-
-
-
-def search(current_node):
-    global all_nodes
-
     
+
 
 
 
